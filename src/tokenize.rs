@@ -77,7 +77,7 @@ fn tokenize(input: &str) -> Vec<Token> {
 }
 
 #[derive(Debug, PartialEq)]
-enum Token {
+pub enum Token {
     Parenthesis(char),
     Whitespace,
     Name(String),
@@ -86,19 +86,19 @@ enum Token {
 }
 
 impl Token {
-    fn string(s: impl Into<String>) -> Self {
+    pub fn string(s: impl Into<String>) -> Self {
         Token::String(s.into())
     }
 
-    fn name(s: impl Into<String>) -> Self {
+    pub fn name(s: impl Into<String>) -> Self {
         Token::Name(s.into())
     }
 
-    fn parenthesis(s: impl Into<char>) -> Self {
+    pub fn parenthesis(s: impl Into<char>) -> Self {
         Token::Parenthesis(s.into())
     }
 
-    fn number(s: impl Into<u32>) -> Self {
+    pub fn number(s: impl Into<u32>) -> Self {
         Token::Number(s.into())
     }
 }
