@@ -76,7 +76,7 @@ fn tokenize(input: &str) -> Vec<Token> {
     tokens
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Parenthesis(char),
     Whitespace,

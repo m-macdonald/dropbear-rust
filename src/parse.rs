@@ -1,5 +1,10 @@
 use crate::tokenize::Token;
 
+use std::{
+    iter::Peekable,
+    slice::Iter,
+};
+
 #[derive(PartialEq)]
 pub enum TreeElement {
     NumericLiteral(u32),
@@ -7,6 +12,12 @@ pub enum TreeElement {
     Identifier(String),
     CallExpression { name: String, arguments: Vec<TreeElement> },
     Empty
+}
+
+#[derive(Clone,Debug)]
+enum Item<T> {
+    Collection(Vec<Item<T>>),
+    Value(T)
 }
 
 impl TreeElement {
@@ -27,32 +38,76 @@ impl TreeElement {
     }
 }
 
-fn parenthesize() {
-
-}
-
 fn parse(tokens: Vec<Token>) -> Option<TreeElement> {
     let mut iter = tokens.iter().peekable();
-    let first_token = iter.next();
+    let parens = parenthesize(&mut iter)?;
+    
+    return classify(&parens)
+}
 
-    if first_token.is_none() {
-        return None
-    }
-
-    return match first_token.unwrap() {
-        Token::Number(value) => Some(TreeElement::numeric_literal(*value)),
-        Token::Name(value) => Some(TreeElement::identifier(value)),
-        Token::String(value) => Some(TreeElement::string_literal(value)),
-        _ => None
+fn parenthesize(tokens: &mut Peekable<Iter<Token>>) -> Option<Item<Token>> {
+    let token = match tokens.next() {
+        None => return None,
+        Some(value) => value
     };
 
-    // TODO: Remove this unwrap when this is further implemented
-    let token = iter.next().unwrap();
     match token {
-        Token::Number(value) => Some(TreeElement::numeric_literal(*value)),
-        Token::Name(value) => Some(TreeElement::identifier(value)),
-        Token::String(value) => Some(TreeElement::string_literal(value)),
-        _ => None
+        Token::Parenthesis(token) if token.eq(&'(') => {
+            let mut expression: Item<Token> = Item::Collection(vec!());
+
+            loop {
+                let next_token = match tokens.peek() {
+                    Some(next_token) => next_token,
+                    None => return Some(expression)
+                };
+
+                match next_token {
+                    Token::Parenthesis(next_token) if next_token.eq(&')') => break,
+                    _ => {
+                        let parens = match parenthesize(tokens) {
+                            None => return Some(expression),
+                            Some(parens) => parens
+                        };
+                        expression = match expression {
+                            Item::Collection(expression_values) => {
+                                let mut new_expression_values = expression_values.clone();
+                                new_expression_values.push(parens);
+                                Item::Collection(new_expression_values)
+                            },
+                            _ => { println!("Somehow expression was not a Collection"); break; }
+                        }
+                    }
+                }
+            }
+
+            // Due to our loop conditions this next value is a closing parenthesis which we don't
+            // care about
+            tokens.next();
+
+            return Some(expression)
+        },
+        // Feels like there should be a better option than cloning here
+        _ => Some(Item::Value(token.clone()))
+    }
+}
+
+fn classify(tokens: &Item<Token>) -> Option<TreeElement> {
+    return match tokens {
+        Item::Value(token) => match token {
+            Token::Number(value) => Some(TreeElement::numeric_literal(*value)),
+            Token::Name(value) => Some(TreeElement::identifier(value)),
+            Token::String(value) => Some(TreeElement::string_literal(value)),
+            _ => None
+        },
+        Item::Collection(tokens) => {
+            let mut tokens = tokens.iter();
+            let first_token = match tokens.next() {
+                Some(Item::Value(Token::Name(token))) => token,
+                _ => return None
+            };
+
+            return Some(TreeElement::call_expression(first_token, tokens.filter_map(classify).collect()))
+        }
     }
 }
 
@@ -114,7 +169,7 @@ fn should_return_an_ast_for_a_nested_data_structure () {
         Token::name("add"),
         Token::number(2 as u32),
         Token::number(3 as u32),
-        Token::parenthesis(')'),
+        Token::parenthesis('('),
         Token::name("subtract"),
         Token::number(4 as u32),
         Token::number(2 as u32),
