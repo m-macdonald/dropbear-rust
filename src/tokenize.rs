@@ -6,11 +6,6 @@ fn tokenize(input: &str) -> Vec<Token> {
     let mut input_chars = input.chars().peekable();
 
     while let Some(character) = input_chars.next() {
-        // let character = match input_chars.next() {
-        //     Some(char) => char,
-        //     None => return tokens
-        // };
-    
         if identify::is_parenthesis(&character) {
             tokens.push(Token::parenthesis(character));
             continue;

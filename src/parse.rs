@@ -7,7 +7,7 @@ use std::{
 
 #[derive(PartialEq)]
 pub enum TreeElement {
-    NumericLiteral(u32),
+    NumericLiteral(f64),
     StringLiteral(String),
     Identifier(String),
     CallExpression { name: String, arguments: Vec<TreeElement> },
@@ -21,7 +21,7 @@ enum Item<T> {
 }
 
 impl TreeElement {
-    pub fn numeric_literal(value: impl Into<u32>) -> Self {
+    pub fn numeric_literal(value: impl Into<f64>) -> Self {
         Self::NumericLiteral(value.into())
     }
 
