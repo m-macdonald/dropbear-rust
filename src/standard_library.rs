@@ -9,6 +9,7 @@ pub fn functions(name: &str) -> Box<StdLibFunction> {
         "subtract" => subtract(),
         "multiply" => multiply(),
         "divide" => divide(),
+        "max" => max(),
         // TODO: Not a good solution for an unmatched function
         _ => add()
     } 
@@ -83,6 +84,17 @@ fn modulo() -> Box<StdLibFunction> {
         return match (a, b) {
             (Evaluatee::Number(a), Evaluatee::Number(b)) => Evaluatee::Number(a % b),
             _ => panic!("modulo received an input that was not a number")
+        }
+    };
+
+    all(func)
+}
+
+fn max() -> Box<StdLibFunction> {
+    let func = |a: Evaluatee, b: Evaluatee| -> Evaluatee {
+        return match (a, b) {
+            (Evaluatee::Number(a), Evaluatee::Number(b)) => Evaluatee::Number(if a < b { b } else { a }),
+            _ => panic!("max recieved an input that was not a number")
         }
     };
 
